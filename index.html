@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phoenix Dev's | Guia Completo de Testes de Software</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonte Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Ícones (FontAwesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Configuração personalizada do Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'phoenix-dark': '#050914',
+                        'phoenix-card': '#0B1221',
+                        'phoenix-pink': '#FF2E93',
+                        'phoenix-pink-light': '#FF70B8',
+                        'phoenix-pink-dark': '#C41E6E',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon': '0 0 25px rgba(255, 46, 147, 0.3)',
+                        'neon-strong': '0 0 40px rgba(255, 46, 147, 0.6)',
+                        'glow-icon': '0 0 30px rgba(255, 46, 147, 0.8)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050914;
+            color: #ffffff;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 46, 147, 0.08), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.08), transparent 25%);
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #FF2E93 0%, #FF70B8 50%, #C41E6E 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-card {
+            background: rgba(11, 18, 33, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #FF2E93, transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .glass-card:hover::before {
+            opacity: 1;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 46, 147, 0.4);
+            transform: translateY(-8px) scale(1.01);
+            box-shadow: 0 20px 40px -15px rgba(255, 46, 147, 0.4);
+            background: rgba(11, 18, 33, 0.9);
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.9s cubic-bezier(0.5, 0, 0, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .icon-glow {
+            position: relative;
+        }
+        .icon-glow::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: #FF2E93;
+            filter: blur(25px);
+            opacity: 0.4;
+            z-index: -1;
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050914;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FF2E93;
+            border-radius: 5px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF70B8;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(255, 46, 147, 0.15);
+            color: #FF70B8;
+            border: 1px solid rgba(255, 46, 147, 0.3);
+        }
+
+        .code-block {
+            background: #000000;
+            border-left: 3px solid #FF2E93;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            overflow-x: auto;
+        }
+        .code-block .comment { color: #6b7280; }
+        .code-block .keyword { color: #FF2E93; }
+        .code-block .string { color: #4ade80; }
+        .code-block .function { color: #60a5fa; }
+    </style>
+</head>
+<body class="font-sans antialiased selection:bg-phoenix-pink selection:text-white">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass-card border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-fire-flame-curved text-phoenix-pink text-2xl"></i>
+                    <span class="text-white font-bold text-xl tracking-tight">Phoenix<span class="text-phoenix-pink">Dev's</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#home" class="hover:text-phoenix-pink transition-colors px-3 py-2 text-sm font-medium">Início</a>
+                        <a href="#testes" class="hover:text-phoenix-pink transition-colors px-3 py-2 text-sm font-medium">Tipos de Testes</a>
+                        <a href="#sobre" class="hover:text-phoenix-pink transition-colors px-3 py-2 text-sm font-medium">Sobre</a>
+                    </div>
+                </div>
+                <div class="hidden md:block">
+                    <a href="#testes" class="bg-phoenix-pink hover:bg-phoenix-pink-light text-white px-5 py-2 rounded-full text-sm font-semibold transition-all shadow-neon">
+                        Começar Agora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative pt-40 pb-24 lg:pt-56 lg:pb-32 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="lg:grid lg:grid-cols-12 lg:gap-12 items-center">
+                <div class="lg:col-span-7 text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 badge mb-6">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        Guia Definitivo 2024
+                    </div>
+                    <h1 class="text-5xl tracking-tight font-extrabold sm:text-6xl md:text-7xl lg:text-8xl leading-tight">
+                        <span class="block text-gradient">Testes de</span>
+                        <span class="block text-gradient">Software</span>
+                    </h1>
+                    <p class="mt-6 text-lg text-gray-400 max-w-2xl mx-auto lg:mx-0">
+                        Domine as 8 modalidades essenciais para garantir a qualidade, segurança e performance das suas aplicações. Do teste unitário à automação completa.
+                    </p>
+                    <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <a href="#testes" class="inline-flex items-center justify-center gap-2 px-8 py-4 bg-phoenix-pink hover:bg-phoenix-pink-light text-white font-bold rounded-full transition-all shadow-neon hover:shadow-neon-strong">
+                            Explorar Guia Completo
+                            <i class="fa-solid fa-arrow-down"></i>
+                        </a>
+                        <a href="#sobre" class="inline-flex items-center justify-center gap-2 px-8 py-4 border border-white/20 hover:border-phoenix-pink text-white font-semibold rounded-full transition-all">
+                            <i class="fa-solid fa-circle-info text-phoenix-pink"></i>
+                            Saiba Mais
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="mt-16 lg:mt-0 lg:col-span-5 flex justify-center items-center relative">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-phoenix-pink blur-[120px] opacity-30 rounded-full"></div>
+                        <i class="fa-solid fa-lock text-[14rem] lg:text-[18rem] text-gradient drop-shadow-[0_0_50px_rgba(255,46,147,0.9)] relative z-10"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção de Conteúdo -->
+    <section id="testes" class="py-20 relative">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center mb-20 reveal">
+                <span class="badge mb-4">Os 8 Pilares</span>
+                <h2 class="text-4xl md:text-5xl font-extrabold text-white mt-4">
+                    Tipos de <span class="text-gradient">Testes de Software</span>
+                </h2>
+                <p class="mt-6 max-w-2xl mx-auto text-lg text-gray-400">
+                    Cada tipo de teste tem um papel crucial no ciclo de vida do desenvolvimento. Explore abaixo cada um deles em detalhes.
+                </p>
+            </div>
+
+            <div class="space-y-10">
+
+                <!-- Card 1: Testes Unitários -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 reveal">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="flex-shrink-0 icon-glow">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-phoenix-pink to-phoenix-pink-dark flex items-center justify-center shadow-glow-icon">
+                                <i class="fa-solid fa-cube text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="badge">Nível 1 - Base</span>
+                                <span class="badge bg-white/5 border-white/10 text-gray-400">Rápido</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">1. Testes Unitários</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                O teste unitário é a base da pirâmide de testes. Ele consiste em testar a <strong class="text-white">menor unidade de código possível</strong> de forma isolada, como uma função, método ou classe. O objetivo é garantir que cada pequena peça do software funcione perfeitamente sozinha, antes de ser integrada ao resto do sistema. São rápidos de executar e geralmente escritos pelo próprio desenvolvedor.
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Quando Usar</h4>
+                                    <p class="text-gray-400 text-sm">Durante o desenvolvimento, sempre que criar ou modificar uma função.</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Ferramentas</h4>
+                                    <p class="text-gray-400 text-sm">Jest, JUnit, PyTest, NUnit, PHPUnit.</p>
+                                </div>
+                            </div>
+
+                            <div class="code-block mb-6">
+                                <div><span class="comment">// Exemplo em JavaScript (Jest)</span></div>
+                                <div><span class="keyword">function</span> <span class="function">somar</span>(a, b) {</div>
+                                <div>&nbsp;&nbsp;<span class="keyword">return</span> a + b;</div>
+                                <div>}</div>
+                                <div class="mt-2"><span class="function">test</span>(<span class="string">'deve somar 2 + 2 e retornar 4'</span>, () => {</div>
+                                <div>&nbsp;&nbsp;<span class="function">expect</span>(<span class="function">somar</span>(2, 2)).<span class="function">toBe</span>(4);</div>
+                                <div>});</div>
+                            </div>
+
+                            <a href="https://www.youtube.com/watch?v=SEU_LINK_AQUI" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-phoenix-pink/10 hover:bg-phoenix-pink border border-phoenix-pink/30 hover:border-phoenix-pink rounded-full text-phoenix-pink hover:text-white font-semibold transition-all group">
+                                <i class="fa-brands fa-youtube text-xl group-hover:scale-110 transition-transform"></i>
+                                Assistir Vídeo Demonstrativo
+                                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Testes de Integração -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 reveal">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="flex-shrink-0 icon-glow">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-phoenix-pink to-phoenix-pink-dark flex items-center justify-center shadow-glow-icon">
+                                <i class="fa-solid fa-puzzle-piece text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="badge">Nível 2 - Conexão</span>
+                                <span class="badge bg-white/5 border-white/10 text-gray-400">Médio</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">2. Testes de Integração</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                Após garantir que as peças isoladas funcionam, precisamos ver se elas conversam bem entre si. O teste de integração verifica a <strong class="text-white">comunicação entre diferentes módulos, serviços ou camadas</strong> do sistema. Por exemplo, se a camada de API consegue se comunicar corretamente com o Banco de Dados, ou se o front-end consome os dados do back-end sem erros.
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Quando Usar</h4>
+                                    <p class="text-gray-400 text-sm">Após os testes unitários, ao conectar módulos ou serviços externos.</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Ferramentas</h4>
+                                    <p class="text-gray-400 text-sm">Supertest, Testcontainers, Postman, RestAssured.</p>
+                                </div>
+                            </div>
+
+                            <div class="code-block mb-6">
+                                <div><span class="comment">// Exemplo de teste de API (Supertest)</span></div>
+                                <div><span class="function">request</span>(app)</div>
+                                <div>&nbsp;&nbsp;.<span class="function">get</span>(<span class="string">'/api/usuarios/1'</span>)</div>
+                                <div>&nbsp;&nbsp;.<span class="function">expect</span>(200)</div>
+                                <div>&nbsp;&nbsp;.<span class="function">expect</span>(<span class="string">'Content-Type'</span>, /json/)</div>
+                                <div>&nbsp;&nbsp;.<span class="function">then</span>(response => {</div>
+                                <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="function">expect</span>(response.body.nome).<span class="function">toBe</span>(<span class="string">'João'</span>);</div>
+                                <div>&nbsp;&nbsp;});</div>
+                            </div>
+
+                            <a href="https://www.youtube.com/watch?v=SEU_LINK_AQUI" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-phoenix-pink/10 hover:bg-phoenix-pink border border-phoenix-pink/30 hover:border-phoenix-pink rounded-full text-phoenix-pink hover:text-white font-semibold transition-all group">
+                                <i class="fa-brands fa-youtube text-xl group-hover:scale-110 transition-transform"></i>
+                                Assistir Vídeo Demonstrativo
+                                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Testes de Sistema  -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 reveal">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="flex-shrink-0 icon-glow">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-phoenix-pink to-phoenix-pink-dark flex items-center justify-center shadow-glow-icon">
+                                <i class="fa-solid fa-desktop text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="badge">Nível 3 - Completo</span>
+                                <span class="badge bg-white/5 border-white/10 text-gray-400">Complexo</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">3. Testes de Sistema</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                Aqui testamos o <strong class="text-white">sistema como um todo</strong>, de ponta a ponta. O objetivo é validar se o software atende aos requisitos funcionais e não funcionais definidos na documentação. É o momento de simular o uso real do usuário, verificando fluxos completos, como um cadastro, login, compra e emissão de nota fiscal, tudo em um ambiente controlado.
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Quando Usar</h4>
+                                    <p class="text-gray-400 text-sm">Após a integração, para validar o sistema completo contra os requisitos.</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Ferramentas</h4>
+                                    <p class="text-gray-400 text-sm">Selenium, Cypress, Playwright, TestComplete.</p>
+                                </div>
+                            </div>
+
+                            <div class="code-block mb-6">
+                                <div><span class="comment">// Exemplo de fluxo completo (Cypress)</span></div>
+                                <div><span class="function">cy</span>.<span class="function">visit</span>(<span class="string">'/login'</span>);</div>
+                                <div><span class="function">cy</span>.<span class="function">get</span>(<span class="string">'#email'</span>).<span class="function">type</span>(<span class="string">'user@email.com'</span>);</div>
+                                <div><span class="function">cy</span>.<span class="function">get</span>(<span class="string">'#senha'</span>).<span class="function">type</span>(<span class="string">'123456'</span>);</div>
+                                <div><span class="function">cy</span>.<span class="function">get</span>(<span class="string">'button[type=submit]'</span>).<span class="function">click</span>();</div>
+                                <div><span class="function">cy</span>.<span class="function">url</span>().<span class="function">should</span>(<span class="string">'include'</span>, <span class="string">'/dashboard'</span>);</div>
+                            </div>
+
+                            <a href="https://youtu.be/OylZC-z5vZQ" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-phoenix-pink/10 hover:bg-phoenix-pink border border-phoenix-pink/30 hover:border-phoenix-pink rounded-full text-phoenix-pink hover:text-white font-semibold transition-all group">
+                                <i class="fa-brands fa-youtube text-xl group-hover:scale-110 transition-transform"></i>
+                                Assistir Vídeo Demonstrativo
+                                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4: Testes de Performance  -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 reveal">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="flex-shrink-0 icon-glow">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-phoenix-pink to-phoenix-pink-dark flex items-center justify-center shadow-glow-icon">
+                                <i class="fa-solid fa-gauge-high text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="badge">Qualidade</span>
+                                <span class="badge bg-white/5 border-white/10 text-gray-400">Velocidade</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">4. Testes de Performance</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                Também conhecidos como testes de carga ou estresse, eles medem a <strong class="text-white">velocidade, capacidade de resposta e estabilidade</strong> do sistema sob diferentes condições de uso. O objetivo é descobrir gargalos, garantir que o sistema aguente picos de acesso e entender qual o limite máximo antes de falhar. É essencial para aplicações web que esperam muitos usuários.
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Quando Usar</h4>
+                                    <p class="text-gray-400 text-sm">Antes de lançamentos, ou quando houver suspeita de lentidão.</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Ferramentas</h4>
+                                    <p class="text-gray-400 text-sm">JMeter, K6, Gatling, LoadRunner.</p>
+                                </div>
+                            </div>
+
+                            <div class="code-block mb-6">
+                                <div><span class="comment">// Exemplo de teste de carga (K6)</span></div>
+                                <div><span class="keyword">import</span> http <span class="keyword">from</span> <span class="string">'k6/http'</span>;</div>
+                                <div><span class="keyword">import</span> { sleep } <span class="keyword">from</span> <span class="string">'k6'</span>;</div>
+                                <div><span class="keyword">export const</span> options = {</div>
+                                <div>&nbsp;&nbsp;vus: 100, <span class="comment">// 100 usuários virtuais</span></div>
+                                <div>&nbsp;&nbsp;duration: <span class="string">'30s'</span>,</div>
+                                <div>};</div>
+                            </div>
+
+                            <a href="https://youtu.be/pJJyA-VVQZw" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-phoenix-pink/10 hover:bg-phoenix-pink border border-phoenix-pink/30 hover:border-phoenix-pink rounded-full text-phoenix-pink hover:text-white font-semibold transition-all group">
+                                <i class="fa-brands fa-youtube text-xl group-hover:scale-110 transition-transform"></i>
+                                Assistir Vídeo Demonstrativo
+                                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Testes de Segurança -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 reveal border border-phoenix-pink/30">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="flex-shrink-0 icon-glow">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-phoenix-pink to-phoenix-pink-dark flex items-center justify-center shadow-glow-icon">
+                                <i class="fa-solid fa-shield-halved text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="badge bg-phoenix-pink text-white">CRÍTICO</span>
+                                <span class="badge bg-white/5 border-white/10 text-gray-400">Proteção</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">5. Testes de Segurança</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                Essenciais para proteger dados sensíveis e a reputação da empresa. Os testes de segurança buscam <strong class="text-white">identificar vulnerabilidades</strong> que podem ser exploradas por atacantes, como SQL Injection, XSS, quebra de autenticação e exposição de dados. Envolve análises estáticas de código e testes dinâmicos de invasão (pentests).
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Quando Usar</h4>
+                                    <p class="text-gray-400 text-sm">Continuamente, especialmente antes de ir para produção.</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Ferramentas</h4>
+                                    <p class="text-gray-400 text-sm">OWASP ZAP, Burp Suite, SonarQube, Snyk.</p>
+                                </div>
+                            </div>
+
+                            <div class="code-block mb-6">
+                                <div><span class="comment">// Exemplo de ataque simulado (SQL Injection)</span></div>
+                                <div><span class="comment">// Entrada maliciosa no campo de login:</span></div>
+                                <div><span class="string">' OR '1'='1' --</span></div>
+                                <div class="mt-2"><span class="comment">// Se o sistema logar sem senha, há uma falha grave!</span></div>
+                            </div>
+
+                            <a href="https://www.youtube.com/watch?v=SEU_LINK_AQUI" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-phoenix-pink/10 hover:bg-phoenix-pink border border-phoenix-pink/30 hover:border-phoenix-pink rounded-full text-phoenix-pink hover:text-white font-semibold transition-all group">
+                                <i class="fa-brands fa-youtube text-xl group-hover:scale-110 transition-transform"></i>
+                                Assistir Vídeo Demonstrativo
+                                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6: Testes de Usabilidade -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 reveal">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="flex-shrink-0 icon-glow">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-phoenix-pink to-phoenix-pink-dark flex items-center justify-center shadow-glow-icon">
+                                <i class="fa-solid fa-user-check text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="badge">UX</span>
+                                <span class="badge bg-white/5 border-white/10 text-gray-400">Experiência</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">6. Testes de Usabilidade</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                Aqui o foco não é o código, mas sim o <strong class="text-white">usuário final</strong>. Avaliamos se a interface é intuitiva, fácil de aprender e agradável de usar. O objetivo é identificar pontos de frustração, dificuldades de navegação e garantir que o usuário consiga realizar suas tarefas sem obstáculos. Pode ser feito com observação direta ou questionários.
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Quando Usar</h4>
+                                    <p class="text-gray-400 text-sm">Durante o design da interface e após o lançamento de novas features.</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Ferramentas</h4>
+                                    <p class="text-gray-400 text-sm">Hotjar, Maze, UserTesting, Google Analytics.</p>
+                                </div>
+                            </div>
+
+                            <div class="code-block mb-6">
+                                <div><span class="comment">// Exemplo de métrica de usabilidade</span></div>
+                                <div><span class="keyword">Tarefa:</span> Encontrar o botão de "Recuperar Senha"</div>
+                                <div><span class="keyword">Métrica:</span> Tempo médio para conclusão</div>
+                                <div><span class="keyword">Resultado:</span> 45 segundos (Muito alto! Precisa melhorar)</div>
+                            </div>
+
+                            <a href="https://www.youtube.com/watch?v=SEU_LINK_AQUI" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-phoenix-pink/10 hover:bg-phoenix-pink border border-phoenix-pink/30 hover:border-phoenix-pink rounded-full text-phoenix-pink hover:text-white font-semibold transition-all group">
+                                <i class="fa-brands fa-youtube text-xl group-hover:scale-110 transition-transform"></i>
+                                Assistir Vídeo Demonstrativo
+                                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 7: Automação de Testes  -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 reveal">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="flex-shrink-0 icon-glow">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-phoenix-pink to-phoenix-pink-dark flex items-center justify-center shadow-glow-icon">
+                                <i class="fa-solid fa-robot text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="badge">Eficiência</span>
+                                <span class="badge bg-white/5 border-white/10 text-gray-400">Escala</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">7. Automação de Testes</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                Consiste em usar <strong class="text-white">scripts e ferramentas</strong> para executar testes de forma automática, sem intervenção humana. Isso é essencial para testes de regressão (garantir que nada quebrou após uma mudança) e para rodar grandes suítes de testes rapidamente em pipelines de CI/CD. Reduz o erro humano e libera os QAs para testes mais exploratórios.
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Quando Usar</h4>
+                                    <p class="text-gray-400 text-sm">Em testes repetitivos, regressão e integração contínua.</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Ferramentas</h4>
+                                    <p class="text-gray-400 text-sm">Cypress, Playwright, Selenium, Robot Framework.</p>
+                                </div>
+                            </div>
+
+                            <div class="code-block mb-6">
+                                <div><span class="comment">// Exemplo de automação (Playwright)</span></div>
+                                <div><span class="keyword">const</span> { chromium } = <span class="function">require</span>(<span class="string">'playwright'</span>);</div>
+                                <div>(<span class="keyword">async</span> () => {</div>
+                                <div>&nbsp;&nbsp;<span class="keyword">const</span> browser = <span class="keyword">await</span> chromium.<span class="function">launch</span>();</div>
+                                <div>&nbsp;&nbsp;<span class="keyword">const</span> page = <span class="keyword">await</span> browser.<span class="function">newPage</span>();</div>
+                                <div>&nbsp;&nbsp;<span class="keyword">await</span> page.<span class="function">goto</span>(<span class="string">'https://exemplo.com'</span>);</div>
+                                <div>})();</div>
+                            </div>
+
+                            <a href="https://youtu.be/6JWFdI5q_LI" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-phoenix-pink/10 hover:bg-phoenix-pink border border-phoenix-pink/30 hover:border-phoenix-pink rounded-full text-phoenix-pink hover:text-white font-semibold transition-all group">
+                                <i class="fa-brands fa-youtube text-xl group-hover:scale-110 transition-transform"></i>
+                                Assistir Vídeo Demonstrativo
+                                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 8: BDD/TDD  -->
+                <div class="glass-card rounded-3xl p-8 md:p-10 reveal">
+                    <div class="flex flex-col md:flex-row gap-8 items-start">
+                        <div class="flex-shrink-0 icon-glow">
+                            <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-phoenix-pink to-phoenix-pink-dark flex items-center justify-center shadow-glow-icon">
+                                <i class="fa-solid fa-code-branch text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="badge">Metodologia</span>
+                                <span class="badge bg-white/5 border-white/10 text-gray-400">Cultura</span>
+                            </div>
+                            <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">8. BDD / TDD</h3>
+                            <p class="text-gray-400 mb-6 leading-relaxed">
+                                Mais do que testes, são <strong class="text-white">metodologias de desenvolvimento</strong>. No <strong>TDD (Test-Driven Development)</strong>, você escreve o teste antes do código. No <strong>BDD (Behavior-Driven Development)</strong>, os testes são escritos em linguagem natural (Gherkin) focando no comportamento do usuário. Isso garante que o código nasça testável e que todos (devs, QAs, negócios) falem a mesma língua.
+                            </p>
+                            
+                            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Quando Usar</h4>
+                                    <p class="text-gray-400 text-sm">No início do desenvolvimento de uma nova funcionalidade.</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-phoenix-pink font-semibold text-sm uppercase tracking-wider mb-2">Ferramentas</h4>
+                                    <p class="text-gray-400 text-sm">Cucumber, SpecFlow, Behave, JBehave.</p>
+                                </div>
+                            </div>
+
+                            <div class="code-block mb-6">
+                                <div><span class="comment">// Exemplo de BDD (Gherkin - Cucumber)</span></div>
+                                <div><span class="keyword">Funcionalidade:</span> Login de Usuário</div>
+                                <div><span class="keyword">Cenário:</span> Login com sucesso</div>
+                                <div>&nbsp;&nbsp;<span class="keyword">Dado</span> que estou na tela de login</div>
+                                <div>&nbsp;&nbsp;<span class="keyword">Quando</span> insiro email e senha válidos</div>
+                                <div>&nbsp;&nbsp;<span class="keyword">Então</span> devo ser redirecionado para o dashboard</div>
+                            </div>
+
+                            <a href="https://youtu.be/9eymPKOQk_g" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-phoenix-pink/10 hover:bg-phoenix-pink border border-phoenix-pink/30 hover:border-phoenix-pink rounded-full text-phoenix-pink hover:text-white font-semibold transition-all group">
+                                <i class="fa-brands fa-youtube text-xl group-hover:scale-110 transition-transform"></i>
+                                Assistir Vídeo Demonstrativo
+                                <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Seção Sobre / CTA Final -->
+    <section id="sobre" class="py-24 relative">
+        <div class="max-w-4xl mx-auto px-4 text-center reveal">
+            <div class="glass-card rounded-3xl p-12 relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-phoenix-pink to-transparent"></div>
+                <i class="fa-solid fa-fire-flame-curved text-phoenix-pink text-5xl mb-6 icon-glow"></i>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mb-6">Pronto para elevar a qualidade do seu software?</h2>
+                <p class="text-gray-400 text-lg mb-8 max-w-2xl mx-auto">
+                    Dominar esses 8 tipos de testes é o diferencial entre um software que apenas funciona e um software que encanta. Continue estudando e aplicando!
+                </p>
+                <a href="#testes" class="inline-flex items-center gap-2 px-8 py-4 bg-phoenix-pink hover:bg-phoenix-pink-light text-white font-bold rounded-full transition-all shadow-neon hover:shadow-neon-strong">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    Revisar os Tipos
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black/60 py-12 border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <i class="fa-solid fa-fire-flame-curved text-phoenix-pink text-2xl"></i>
+                <span class="text-white font-bold text-xl tracking-tight">Phoenix<span class="text-phoenix-pink">Dev's</span></span>
+            </div>
+            <p class="text-gray-500 text-sm mb-4">Transformando conhecimento em qualidade de software.</p>
+            <div class="flex justify-center gap-6 mb-6">
+                <a href="#" class="text-gray-400 hover:text-phoenix-pink transition-colors"><i class="fa-brands fa-github text-xl"></i></a>
+                <a href="#" class="text-gray-400 hover:text-phoenix-pink transition-colors"><i class="fa-brands fa-linkedin text-xl"></i></a>
+                <a href="#" class="text-gray-400 hover:text-phoenix-pink transition-colors"><i class="fa-brands fa-youtube text-xl"></i></a>
+                <a href="#" class="text-gray-400 hover:text-phoenix-pink transition-colors"><i class="fa-brands fa-instagram text-xl"></i></a>
+            </div>
+            <p class="text-gray-600 text-xs">© 2024 Phoenix Dev's. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <!-- Script para Animação de Scroll -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const reveals = document.querySelectorAll('.reveal');
+
+            const revealOnScroll = () => {
+                const windowHeight = window.innerHeight;
+                const elementVisible = 100;
+
+                reveals.forEach((reveal) => {
+                    const elementTop = reveal.getBoundingClientRect().top;
+                    if (elementTop < windowHeight - elementVisible) {
+                        reveal.classList.add('active');
+                    }
+                });
+            };
+
+            window.addEventListener('scroll', revealOnScroll);
+            revealOnScroll();
+
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

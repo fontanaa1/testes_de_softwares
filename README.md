@@ -9,7 +9,7 @@
 
 **Um guia visual, moderno e interativo sobre os 8 tipos essenciais de Testes de Software.**
 
-[🌐 Ver Site](#) · [🐛 Reportar Bug](../../issues) · [💡 Sugerir Melhoria](../../issues)
+[🌐 Ver Site](#https://fontanaa1.github.io/testes_de_softwares/) · [🐛 Reportar Bug](../../issues) · [💡 Sugerir Melhoria](../../issues)
 
 </div>
 
